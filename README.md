@@ -20,6 +20,32 @@ Instagram yorum kontrol ve token yonetim paneli.
 
 Bu proje yalnizca Linux Bash terminali icin hazirlanmistir.
 
+## PythonAnywhere (Bash) indirme yontemi
+
+PythonAnywhere Bash Console icinde:
+
+```bash
+cd ~
+git clone https://github.com/seghobs/kontrol.git
+cd kontrol
+chmod -R u+rwX .
+```
+
+Direkt mevcut bos dizine klonlamak istersen:
+
+```bash
+cd /hedef/klasor
+git clone https://github.com/seghobs/kontrol.git .
+chmod -R u+rwX .
+```
+
+`setup_kontrol.sh` kullanmak istersen:
+
+```bash
+chmod +x setup_kontrol.sh
+./setup_kontrol.sh
+```
+
 ### 1) Repo'yu klonla
 
 ```bash
