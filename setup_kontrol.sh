@@ -3,11 +3,18 @@
 set -euo pipefail
 
 REPO_URL="${1:-https://github.com/seghobs/kontrol.git}"
-TARGET_DIR="${2:-kontrol}"
+TARGET_DIR="${2:-.}"
 
-if [ -e "$TARGET_DIR" ]; then
-  echo "Hata: '$TARGET_DIR' zaten var. Bos bir klasor adi verin."
-  exit 1
+if [ "$TARGET_DIR" = "." ]; then
+  if [ -n "$(ls -A .)" ]; then
+    echo "Hata: Bulundugunuz dizin bos degil. '.' hedefi icin dizin bos olmali."
+    exit 1
+  fi
+else
+  if [ -e "$TARGET_DIR" ]; then
+    echo "Hata: '$TARGET_DIR' zaten var. Bos bir klasor adi verin."
+    exit 1
+  fi
 fi
 
 echo "Proje indiriliyor: $REPO_URL"

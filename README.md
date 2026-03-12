@@ -16,7 +16,9 @@ Instagram yorum kontrol ve token yonetim paneli.
 - Git
 - Internet baglantisi
 
-## Kurulum (Linux/macOS)
+## Kurulum (Sadece Linux Bash)
+
+Bu proje yalnizca Linux Bash terminali icin hazirlanmistir.
 
 ### 1) Repo'yu klonla
 
@@ -25,11 +27,30 @@ git clone https://github.com/seghobs/kontrol.git
 cd kontrol
 ```
 
-### 2) Kurulum scripti ile izinleri ayarla
+### 2) Python sanal ortam olustur (onerilen)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3) Flask bagimliligini kur
+
+```bash
+pip install flask requests
+```
+
+### 4) Kurulum scripti ile izinleri ayarla
 
 ```bash
 chmod +x setup_kontrol.sh
 ./setup_kontrol.sh
+```
+
+Bulundugun bos dizine direkt indirmek icin:
+
+```bash
+./setup_kontrol.sh https://github.com/seghobs/kontrol.git .
 ```
 
 Not: `setup_kontrol.sh` projeyi calistirmaz, sadece klonlama ve gerekli yazma/okuma izinlerini ayarlar.
@@ -41,6 +62,33 @@ git clone https://github.com/seghobs/kontrol.git
 cd kontrol
 chmod -R u+rwX .
 ```
+
+## Bash script kullanim detaylari
+
+Script dosyasi: `setup_kontrol.sh`
+
+- Parametre 1: Repo URL (opsiyonel)
+- Parametre 2: Hedef dizin (opsiyonel)
+
+Varsayilan kullanim:
+
+```bash
+./setup_kontrol.sh
+```
+
+Bu komut bulundugun bos dizine direkt klonlar (ek klasor olusturmaz).
+
+Bulundugun bos dizine direkt klonlamak icin:
+
+```bash
+./setup_kontrol.sh https://github.com/seghobs/kontrol.git .
+```
+
+Onemli:
+
+- `.` hedefi icin dizin bos olmali
+- Script uygulamayi calistirmaz
+- Sadece klonlar ve okuma/yazma izinlerini ayarlar
 
 ## Uygulamayi calistirma
 
@@ -58,16 +106,6 @@ Admin giris:
 
 ```text
 http://127.0.0.1:5000/admin/login
-```
-
-## Windows notu
-
-Windows'ta `.sh` yerine su adimlari kullan:
-
-```powershell
-git clone https://github.com/seghobs/kontrol.git
-cd kontrol
-python flask_app.py
 ```
 
 ## Proje yapisi
