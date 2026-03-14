@@ -14,13 +14,15 @@ let usePostgres = false;
 if (process.env.DATABASE_URL) {
     storage = require('./storage-postgres');
     usePostgres = true;
+    // Create pool immediately before any async operations
+    storage.createPool();
 } else {
     storage = require('./storage');
 }
 
 // Async initialization function
 async function initializeApp() {
-    // Initialize storage (and pool for PostgreSQL)
+    // Initialize storage (creates tables, etc.)
     await storage.initStorage();
     console.log('Veritabani baslatildi');
 
@@ -34,6 +36,9 @@ async function initializeApp() {
 
     // Session configuration - use PostgreSQL for serverless environments
     if (usePostgres) {
+        // Wait a bit for pool to be ready (small delay to ensure pool is established)
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         app.use(session({
             store: new pgSession({
                 pool: storage.pool,
