@@ -18,66 +18,92 @@ if (process.env.DATABASE_URL) {
     storage = require('./storage');
 }
 
-// Async initialization function
-async function initializeApp() {
-    // Initialize storage (and create pool for PostgreSQL)
-    await storage.initStorage();
-    console.log('Veritabani baslatildi');
+// Create Express app
+const app = express();
 
-    const app = express();
-    const PORT = process.env.PORT || 5000;
-    const HOST = process.env.HOST || '0.0.0.0';
+// Non-DB middleware (can be added immediately)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: true }));
-    app.use(cookieParser());
+// Readiness flag for Vercel serverless
+app.ready = false;
 
-    // Session configuration - use PostgreSQL for serverless environments
-    if (usePostgres) {
-        // Wait a bit for pool to be ready (small delay to ensure pool is established)
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        app.use(session({
-            store: new pgSession({
-                pool: storage.getPool(),
-                tableName: 'session',
-                pruneSessionInterval: 60 * 60 // Prune expired sessions every hour
-            }),
-            secret: config.SECRET_KEY,
-            resave: false,
-            saveUninitialized: false,
-            cookie: { 
-                secure: process.env.NODE_ENV === 'production',
-                maxAge: 24 * 60 * 60 * 1000,
-                sameSite: 'lax'
-            }
-        }));
-    } else {
-        app.use(session({
-            secret: config.SECRET_KEY,
-            resave: false,
-            saveUninitialized: false,
-            cookie: { 
-                secure: process.env.NODE_ENV === 'production',
-                maxAge: 24 * 60 * 60 * 1000 // 24 hours
-            }
-        }));
+// Readiness middleware - block requests until DB is ready
+app.use((req, res, next) => {
+    if (!app.ready) {
+        return res.status(503).json({ error: 'Service initializing, please try again in a moment' });
     }
+    next();
+});
 
-    app.use(express.static(path.join(__dirname, 'public')));
+// Async initialization function
+async function initialize() {
+    try {
+        // Initialize storage (and create pool for PostgreSQL)
+        await storage.initStorage();
+        console.log('Veritabani baslatildi');
 
-    app.set('view engine', 'ejs');
-    app.set('views', path.join(__dirname, 'views'));
+        // Session configuration - use PostgreSQL for serverless environments
+        if (usePostgres) {
+            app.use(session({
+                store: new pgSession({
+                    pool: storage.getPool(),
+                    tableName: 'session',
+                    pruneSessionInterval: 60 * 60 // Prune expired sessions every hour
+                }),
+                secret: config.SECRET_KEY,
+                resave: false,
+                saveUninitialized: false,
+                cookie: { 
+                    secure: process.env.NODE_ENV === 'production',
+                    maxAge: 24 * 60 * 60 * 1000,
+                    sameSite: 'lax'
+                }
+            }));
+        } else {
+            app.use(session({
+                secret: config.SECRET_KEY,
+                resave: false,
+                saveUninitialized: false,
+                cookie: { 
+                    secure: process.env.NODE_ENV === 'production',
+                    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+                }
+            }));
+        }
 
-    routes(app);
+        // Add routes after session middleware
+        routes(app);
 
-    app.listen(PORT, () => {
-        console.log(`Sunucu adresi: http://localhost:${PORT}`);
-    });
+        // Mark app as ready
+        app.ready = true;
+        console.log('Sunucu hazir');
+    } catch (error) {
+        console.error('Sunucu baslatma hatasi:', error);
+        process.exit(1);
+    }
 }
 
-// Start the app
-initializeApp().catch(err => {
-    console.error('Sunucu baslatma hatasi:', err);
-    process.exit(1);
-});
+// Start initialization
+initialize();
+
+// Export for Vercel serverless
+module.exports = app;
+
+// For local development - start HTTP server
+if (require.main === module) {
+    initialize().then(() => {
+        const PORT = process.env.PORT || 5000;
+        const HOST = process.env.HOST || '0.0.0.0';
+        app.listen(PORT, HOST, () => {
+            console.log(`Sunucu adresi: http://${HOST}:${PORT}`);
+        });
+    }).catch(err => {
+        console.error('Sunucu baslatma hatasi:', err);
+        process.exit(1);
+    });
+}
