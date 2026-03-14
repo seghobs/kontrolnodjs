@@ -199,5 +199,6 @@ module.exports = {
     saveExemptions,
     loadTokenData,
     saveTokenData,
-    pool
+    pool,
+    createPool
 };
