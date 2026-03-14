@@ -15,9 +15,11 @@ if (process.env.DATABASE_URL) {
     usePostgres = true;
     
     // Initialize pool immediately before session middleware
-    storage.createPool().catch(err => {
+    try {
+        storage.createPool();
+    } catch (err) {
         console.error('PostgreSQL pool creation failed:', err);
-    });
+    }
 } else {
     storage = require('./storage');
 }
