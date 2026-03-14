@@ -3,7 +3,7 @@ const config = require('./config');
 
 let pool = null;
 
-function connect() {
+function createPool() {
     const connectionString = process.env.DATABASE_URL || config.DATABASE_URL;
     
     if (!connectionString) {
@@ -15,6 +15,13 @@ function connect() {
         ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
     });
 
+    return pool;
+}
+
+async function connect() {
+    if (!pool) {
+        createPool();
+    }
     return pool.connect();
 }
 
@@ -53,7 +60,6 @@ async function initStorage() {
             )
         `);
 
-        // Create index for faster queries
         await client.query(`
             CREATE INDEX IF NOT EXISTS idx_tokens_username ON tokens(username)
         `);
@@ -66,145 +72,123 @@ async function initStorage() {
     }
 }
 
-function loadTokens() {
-    return new Promise((resolve, reject) => {
-        pool.query('SELECT * FROM tokens ORDER BY username ASC', (err, rows) => {
-            if (err) {
-                reject(err);
-                return;
+async function loadTokens() {
+    try {
+        const result = await pool.query('SELECT * FROM tokens ORDER BY username ASC');
+        const tokens = result.rows.map(row => {
+            const item = { ...row };
+            item.is_active = Boolean(item.is_active);
+            if (!item.logout_reason) {
+                delete item.logout_reason;
             }
-
-            const tokens = rows.map(row => {
-                const item = { ...row };
-                item.is_active = Boolean(item.is_active);
-                if (!item.logout_reason) {
-                    delete item.logout_reason;
-                }
-                if (!item.logout_time) {
-                    delete item.logout_time;
-                }
-                return item;
-            });
-
-            resolve(tokens);
+            if (!item.logout_time) {
+                delete item.logout_time;
+            }
+            return item;
         });
-    });
+        return tokens;
+    } catch (error) {
+        console.error('loadTokens error:', error);
+        throw error;
+    }
 }
 
-function saveTokens(tokens) {
-    return new Promise((resolve, reject) => {
-        pool.query('DELETE FROM tokens', (err) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-
-            const client = pool;
-            tokens.forEach(async (token) => {
-                await client.query(
-                    `INSERT INTO tokens (
-                        username, full_name, password, token, android_id_yeni,
-                        user_agent, device_id, is_active, added_at, logout_reason, logout_time
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-                    [
-                        token.username || '',
-                        token.full_name || '',
-                        token.password || '',
-                        token.token || '',
-                        token.android_id_yeni || '',
-                        token.user_agent || '',
-                        token.device_id || '',
-                        token.is_active || true,
-                        token.added_at || '',
-                        token.logout_reason || '',
-                        token.logout_time || ''
-                    ]
-                );
-            }).then(() => resolve(true)).catch(reject);
-        });
-    });
-}
-
-function loadExemptions() {
-    return new Promise((resolve, reject) => {
-        pool.query('SELECT post_link, username FROM exemptions', (err, rows) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-
-            const result = {};
-            rows.forEach(row => {
-                if (!result[row.post_link]) {
-                    result[row.post_link] = [];
-                }
-                result[row.post_link].push(row.username);
-            });
-
-            resolve(result);
-        });
-    });
-}
-
-function saveExemptions(exemptions) {
-    return new Promise((resolve, reject) => {
-        pool.query('DELETE FROM exemptions', (err) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-
-            const client = pool;
-            Object.entries(exemptions).forEach(async ([postLink, usernames]) => {
-                if (Array.isArray(usernames)) {
-                    usernames.forEach(async (username) => {
-                        await client.query(
-                            'INSERT INTO exemptions (post_link, username) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-                            [postLink, username]
-                        );
-                    });
-                }
-            }).then(() => resolve(true)).catch(reject);
-        });
-    });
-}
-
-function loadTokenData() {
-    return new Promise((resolve, reject) => {
-        pool.query("SELECT value FROM key_value WHERE key='legacy_token_data'", (err, rows) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-
-            if (rows.length === 0) {
-                resolve({});
-                return;
-            }
-
-            try {
-                resolve(JSON.parse(rows[0].value));
-            } catch (error) {
-                resolve({});
-            }
-        });
-    });
-}
-
-function saveTokenData(data) {
-    return new Promise((resolve, reject) => {
-        pool.query(
-            'INSERT INTO key_value (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2',
-            ['legacy_token_data', JSON.stringify(data)],
-            (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(true);
-                }
-            }
+async function saveTokens(tokens) {
+    try {
+        await pool.query('DELETE FROM tokens');
+        const insertPromises = tokens.map(token => 
+            pool.query(
+                `INSERT INTO tokens (
+                    username, full_name, password, token, android_id_yeni,
+                    user_agent, device_id, is_active, added_at, logout_reason, logout_time
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                [
+                    token.username || '',
+                    token.full_name || '',
+                    token.password || '',
+                    token.token || '',
+                    token.android_id_yeni || '',
+                    token.user_agent || '',
+                    token.device_id || '',
+                    token.is_active || true,
+                    token.added_at || '',
+                    token.logout_reason || '',
+                    token.logout_time || ''
+                ]
+            )
         );
-    });
+        await Promise.all(insertPromises);
+        return true;
+    } catch (error) {
+        console.error('saveTokens error:', error);
+        throw error;
+    }
+}
+
+async function loadExemptions() {
+    try {
+        const result = await pool.query('SELECT post_link, username FROM exemptions');
+        const exemptions = {};
+        result.rows.forEach(row => {
+            if (!exemptions[row.post_link]) {
+                exemptions[row.post_link] = [];
+            }
+            exemptions[row.post_link].push(row.username);
+        });
+        return exemptions;
+    } catch (error) {
+        console.error('loadExemptions error:', error);
+        throw error;
+    }
+}
+
+async function saveExemptions(exemptions) {
+    try {
+        await pool.query('DELETE FROM exemptions');
+        const insertPromises = Object.entries(exemptions).flatMap(([postLink, usernames]) => 
+            usernames.map(username => 
+                pool.query(
+                    'INSERT INTO exemptions (post_link, username) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+                    [postLink, username]
+                )
+            )
+        );
+        await Promise.all(insertPromises);
+        return true;
+    } catch (error) {
+        console.error('saveExemptions error:', error);
+        throw error;
+    }
+}
+
+async function loadTokenData() {
+    try {
+        const result = await pool.query("SELECT value FROM key_value WHERE key='legacy_token_data'");
+        if (result.rows.length === 0) {
+            return {};
+        }
+        try {
+            return JSON.parse(result.rows[0].value);
+        } catch (error) {
+            return {};
+        }
+    } catch (error) {
+        console.error('loadTokenData error:', error);
+        throw error;
+    }
+}
+
+async function saveTokenData(data) {
+    try {
+        await pool.query(
+            'INSERT INTO key_value (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2',
+            ['legacy_token_data', JSON.stringify(data)]
+        );
+        return true;
+    } catch (error) {
+        console.error('saveTokenData error:', error);
+        throw error;
+    }
 }
 
 module.exports = {
