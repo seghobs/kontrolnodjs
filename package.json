@@ -1,0 +1,21 @@
+{
+  "name": "instagram-yorum-kontrol",
+  "version": "1.0.0",
+  "description": "Instagram yorum kontrol uygulaması - Node.js versiyonu",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["instagram", "yorum", "kontrol", "token"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.6",
+    "axios": "^1.6.0",
+    "cookie-parser": "^1.4.6",
+    "ejs": "^3.1.9",
+    "express-session": "^1.17.3"
+  }
+}

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Post Kontrol</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .form-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 
+                0 30px 60px -15px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            padding: 48px;
+            max-width: 640px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-title {
+            font-size: 2.25rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a5b4fc 0%, #c4b5fd 30%, #ddd6fe 60%, #e9d5ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2.5rem;
+            text-align: center;
+            letter-spacing: -0.02em;
+        }
+
+        .form-group {
+            margin-bottom: 1.75rem;
+        }
+
+        .form-label {
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-label i {
+            color: #a5b4fc;
+            font-size: 1rem;
+        }
+
+        .form-input, .form-textarea {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #fff;
+            border-radius: 16px;
+            padding: 1rem 1.25rem;
+            width: 100%;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #a5b4fc;
+            box-shadow: 
+                0 0 0 4px rgba(165, 180, 252, 0.15),
+                0 0 20px rgba(165, 180, 252, 0.2);
+        }
+
+        .form-input::placeholder, .form-textarea::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+            font-weight: 400;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 140px;
+            line-height: 1.6;
+        }
+
+        .user-count {
+            color: #c4b5fd;
+            font-size: 0.875rem;
+            margin-top: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-count i {
+            font-size: 0.75rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+            color: white;
+            box-shadow: 
+                0 10px 30px -5px rgba(139, 92, 246, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 
+                0 10px 30px -5px rgba(139, 92, 246, 0.6),
+                0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-admin {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .btn-admin:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-card {
+            width: min(480px, 92vw);
+            background: rgba(20, 20, 35, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 2.5rem;
+            color: #fff;
+            box-shadow: 
+                0 30px 60px -15px rgba(0, 0, 0, 0.8),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .modal-title i {
+            color: #fbbf24;
+            font-size: 1.5rem;
+        }
+
+        .modal-text {
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 2rem;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .form-card {
+                padding: 2rem;
+                border-radius: 24px;
+            }
+            
+            .form-title {
+                font-size: 2rem;
+            }
+            
+            .btn {
+                padding: 0.875rem 1.25rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .form-card {
+                padding: 1.5rem;
+                border-radius: 20px;
+            }
+            
+            .form-title {
+                font-size: 1.75rem;
+                margin-bottom: 2rem;
+            }
+        }
+    </style>
+</head>
+<body data-token-error-message="<%= token_error_message %>">
+    <div class="container mx-auto px-4">
+        <div class="flex justify-center">
+            <div class="w-full max-w-2xl">
+                <div class="form-card">
+                    <h2 class="form-title">
+                        <i class="fas fa-comments"></i> Yorum Kontrolleri
+                    </h2>
+                    <form method="post" action="/" class="space-y-8">
+                        <div>
+                            <label for="post_link" class="form-label">
+                                <i class="fab fa-instagram"></i> Instagram Post Linki
+                            </label>
+                            <input 
+                                type="text" 
+                                id="post_link" 
+                                name="post_link" 
+                                class="form-input" 
+                                placeholder="https://www.instagram.com/p/..." 
+                                required
+                                autocomplete="url"
+                            >
+                        </div>
+                        <div>
+                            <label for="grup_uye" class="form-label">
+                                <i class="fas fa-users"></i> Grup Üye Listesi
+                            </label>
+                            <textarea 
+                                id="grup_uye" 
+                                name="grup_uye" 
+                                class="form-textarea" 
+                                placeholder="Her satıra bir kullanıcı adı yazın" 
+                                oninput="updateUserCount()" 
+                                required
+                            ></textarea>
+                            <div class="user-count">
+                                <i class="fas fa-user-check"></i>
+                                <span id="user_count">0 kullanıcı eklendi</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="fas fa-search"></i> Kontrol Et
+                        </button>
+                    </form>
+                    <div class="mt-6 space-y-3">
+                        <button onclick="location.href='/token_al'" class="btn btn-secondary">
+                            <i class="fas fa-key"></i> Token Al
+                        </button>
+                        <button onclick="location.href='/admin'" class="btn btn-admin">
+                            <i class="fas fa-lock"></i> Admin Panel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tokenErrorModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-title">
+                <i class="fas fa-triangle-exclamation"></i> Token Uyarısı
+            </div>
+            <div class="modal-text" id="tokenErrorText"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary flex-1" id="closeTokenModalBtn">Tamam</button>
+                <button type="button" class="btn btn-admin flex-1" onclick="location.href='/admin'">Admin Panel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTokenErrorModal(message) {
+            const modal = document.getElementById('tokenErrorModal');
+            document.getElementById('tokenErrorText').textContent = message;
+            modal.classList.add('show');
+        }
+
+        function updateUserCount() {
+            const textarea = document.getElementById('grup_uye');
+            const userCountDisplay = document.getElementById('user_count');
+            const users = textarea.value.split('\n').filter(user => user.trim() !== '');
+            const count = users.length;
+            userCountDisplay.innerHTML = `<i class="fas fa-user-check"></i> <strong>${count}</strong> kullanıcı eklendi`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tokenErrorMessage = document.body.dataset.tokenErrorMessage;
+
+            document.getElementById('closeTokenModalBtn').addEventListener('click', () => {
+                document.getElementById('tokenErrorModal').classList.remove('show');
+            });
+
+            document.getElementById('tokenErrorModal').addEventListener('click', (event) => {
+                if (event.target.id === 'tokenErrorModal') {
+                    event.currentTarget.classList.remove('show');
+                }
+            });
+
+            if (tokenErrorMessage) {
+                showTokenErrorModal(tokenErrorMessage);
+            }
+        });
+
+        window.updateUserCount = updateUserCount;
+    </script>
+</body>
+</html>

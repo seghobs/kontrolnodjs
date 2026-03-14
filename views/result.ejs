@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eksikler</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 
+                0 30px 60px -15px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            padding: 2.5rem;
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .result-title {
+            font-size: 2.25rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a5b4fc 0%, #c4b5fd 30%, #ddd6fe 60%, #e9d5ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .result-count {
+            color: #c4b5fd;
+            font-size: 1.125rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .search-input {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #fff;
+            border-radius: 16px;
+            padding: 1rem 1rem 1rem 3.5rem;
+            width: 100%;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .search-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #a5b4fc;
+            box-shadow: 
+                0 0 0 4px rgba(165, 180, 252, 0.15),
+                0 0 20px rgba(165, 180, 252, 0.2);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+            font-weight: 400;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            z-index: 2;
+            font-size: 1.125rem;
+        }
+
+        .user-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .user-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-icon {
+            color: #a5b4fc;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .user-name {
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.125rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .btn-exemption {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.25rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-exemption:hover {
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-exemption:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-copy {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 2rem;
+            box-shadow: 0 10px 30px -5px rgba(139, 92, 246, 0.5);
+        }
+
+        .btn-copy:hover {
+            box-shadow: 0 15px 40px -5px rgba(139, 92, 246, 0.6);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 5rem 2rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .empty-state i {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(20, 20, 35, 0.95);
+            backdrop-filter: blur(30px);
+            color: white;
+            padding: 1.25rem 1.75rem;
+            border-radius: 16px;
+            border: 1px solid rgba(165, 180, 252, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            min-width: 320px;
+            max-width: 600px;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .notification.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .notification i {
+            color: #10b981;
+            font-size: 1.5rem;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-card {
+            width: min(420px, 92vw);
+            background: rgba(20, 20, 35, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 2rem;
+            color: #fff;
+            box-shadow: 
+                0 30px 60px -15px rgba(0, 0, 0, 0.8),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            color: #fff;
+        }
+
+        .modal-header i {
+            color: #fbbf24;
+            font-size: 1.5rem;
+        }
+
+        .modal-body {
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 2rem;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        .modal-username {
+            color: #a5b4fc;
+            font-weight: 700;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 0.875rem 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn-cancel {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .modal-btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-btn-confirm {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+            border: none;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .modal-btn-confirm:hover {
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .result-card {
+                padding: 1.5rem;
+                border-radius: 24px;
+            }
+            
+            .result-title {
+                font-size: 2rem;
+            }
+            
+            .user-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            
+            .btn-exemption {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .result-card {
+                padding: 1.25rem;
+                border-radius: 20px;
+            }
+            
+            .result-title {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body data-post-link="<%= post_link %>">
+    <div class="container mx-auto px-4">
+        <div class="max-w-4xl mx-auto">
+            <div class="result-card">
+                <div class="result-header">
+                    <h1 class="result-title">
+                        <i class="fas fa-user-minus"></i> Eksikler
+                    </h1>
+                    <div class="result-count" id="countDisplay">
+                        <i class="fas fa-users"></i>
+                        <span>Eksik Sayısı: 0</span>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            class="search-input" 
+                            placeholder="Kullanıcı adı ara..."
+                            oninput="filterList()"
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+
+                <div id="listContainer">
+                    <ul class="user-list" id="usersList">
+                        <% if (eksikler && eksikler.length > 0) { %>
+                            <% eksikler.forEach(eksik => { %>
+                                <li class="user-item" data-username="<%= eksik %>">
+                                    <div class="user-info">
+                                        <i class="fas fa-user user-icon"></i>
+                                        <span class="user-name"><strong>@<%= eksik %></strong></span>
+                                    </div>
+                                    <button 
+                                        class="btn-exemption" 
+                                        onclick="addExemption('<%= eksik %>', this)"
+                                    >
+                                        <i class="fas fa-check"></i> İzinli Say
+                                    </button>
+                                </li>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="empty-state">
+                                <i class="fas fa-check-circle"></i>
+                                <p>Harika! Tüm grup üyeleri yorum yapmış.</p>
+                            </div>
+                        <% } %>
+                    </ul>
+                </div>
+
+                <% if (eksikler && eksikler.length > 0) { %>
+                    <button class="btn-copy" onclick="copyList()">
+                        <i class="fas fa-copy"></i> Listeyi Kopyala
+                    </button>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText"></span>
+    </div>
+
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <i class="fas fa-exclamation-circle"></i>
+                Onay Gerekli
+            </div>
+            <div class="modal-body">
+                <span class="modal-username" id="modalUsername"></span> kullanıcısını izinli sayacaksınız. Emin misiniz?
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="closeModal()">
+                    <i class="fas fa-times"></i> Hayır
+                </button>
+                <button class="modal-btn modal-btn-confirm" onclick="confirmExemption()">
+                    <i class="fas fa-check"></i> Evet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pendingUsername = null;
+        let pendingButton = null;
+        const postLink = document.body.dataset.postLink || '';
+
+        function updateCount() {
+            const listItems = document.getElementById('usersList')?.getElementsByTagName('li') || [];
+            const visibleCount = Array.from(listItems).filter(item => item.style.display !== 'none').length;
+            const countDisplay = document.getElementById('countDisplay');
+            countDisplay.innerHTML = `
+                <i class="fas fa-users"></i>
+                <span>Eksik Sayısı: ${visibleCount}</span>
+            `;
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            document.getElementById('notificationText').textContent = message;
+
+            if (notification.classList.contains('visible')) {
+                notification.classList.remove('visible');
+            }
+
+            setTimeout(() => {
+                notification.classList.add('visible');
+            }, 10);
+
+            setTimeout(() => {
+                notification.classList.remove('visible');
+            }, 3000);
+        }
+
+        function closeModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+            pendingUsername = null;
+            pendingButton = null;
+        }
+
+        function addExemption(username, button) {
+            pendingUsername = username;
+            pendingButton = button;
+            document.getElementById('modalUsername').textContent = `@${username}`;
+            document.getElementById('confirmModal').classList.add('show');
+        }
+
+        async function confirmExemption() {
+            if (!pendingUsername || !pendingButton) {
+                return;
+            }
+
+            const username = pendingUsername;
+            const button = pendingButton;
+            closeModal();
+
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Kaydediliyor...';
+
+            try {
+                const response = await fetch('/add_exemption', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ post_link: postLink, username })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const listItem = button.closest('li');
+                    listItem.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+                    listItem.style.opacity = '0';
+                    listItem.style.transform = 'translateX(20px)';
+
+                    setTimeout(() => {
+                        listItem.remove();
+                        updateCount();
+                        showNotification(`@${username} izinli listesine eklendi!`);
+                    }, 200);
+                    return;
+                }
+
+                showNotification(`Hata: ${data.message}`);
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-check"></i> İzinli Say';
+            } catch (error) {
+                showNotification('Bir hata oluştu!');
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-check"></i> İzinli Say';
+            }
+        }
+
+        async function copyList() {
+            const listItems = document.getElementById('usersList')?.getElementsByTagName('li') || [];
+            let text = '';
+
+            for (let i = 0; i < listItems.length; i++) {
+                const username = listItems[i].getAttribute('data-username');
+                if (username) {
+                    text += `@${username}`;
+                    if (i < listItems.length - 1) {
+                        text += '\n';
+                    }
+                }
+            }
+
+            const count = listItems.length;
+
+            try {
+                await navigator.clipboard.writeText(text);
+                showNotification(`Liste kopyalandı! Toplam eksik sayısı: ${count}`);
+            } catch (err) {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-9999px';
+                document.body.appendChild(textArea);
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    showNotification(`Liste kopyalandı! Toplam eksik sayısı: ${count}`);
+                } catch (e) {
+                    showNotification('Kopyalama desteklenmiyor!');
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function filterList() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const listItems = document.getElementById('usersList')?.getElementsByTagName('li') || [];
+
+            for (let i = 0; i < listItems.length; i++) {
+                const item = listItems[i];
+                const textValue = item.innerText.toLowerCase();
+                item.style.display = textValue.includes(input) ? '' : 'none';
+            }
+
+            updateCount();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCount();
+        });
+
+        window.addExemption = addExemption;
+        window.closeModal = closeModal;
+        window.confirmExemption = confirmExemption;
+        window.copyList = copyList;
+        window.filterList = filterList;
+    </script>
+</body>
+</html>
