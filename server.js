@@ -9,8 +9,15 @@ const routes = require('./routes');
 
 // Use PostgreSQL storage if DATABASE_URL is available (Vercel/Fly.io), otherwise SQLite
 let storage;
+let usePostgres = false;
 if (process.env.DATABASE_URL) {
     storage = require('./storage-postgres');
+    usePostgres = true;
+    
+    // Initialize pool immediately before session middleware
+    storage.createPool().catch(err => {
+        console.error('PostgreSQL pool creation failed:', err);
+    });
 } else {
     storage = require('./storage');
 }
@@ -24,11 +31,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Session configuration - use PostgreSQL for serverless environments
-if (process.env.DATABASE_URL) {
+if (usePostgres) {
     app.use(session({
         store: new pgSession({
             pool: storage.pool,
-            tableName: 'session'
+            tableName: 'session',
+            pruneSessionInterval: 60 * 60 // Prune expired sessions every hour
         }),
         secret: config.SECRET_KEY,
         resave: false,
