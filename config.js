@@ -11,6 +11,10 @@ const EXEMPTIONS_FILE = path.join(BASE_DIR, 'exemptions.json');
 // PostgreSQL connection string (for Vercel/Fly.io)
 const DATABASE_URL = process.env.DATABASE_URL || '';
 
+// Use environment variables if available, otherwise fallback to defaults
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'seho';
+const SECRET_KEY = process.env.SECRET_KEY || 'seho_admin_panel_secret_key_2024';
+
 module.exports = {
     BASE_DIR,
     DB_FILE,
@@ -18,7 +22,7 @@ module.exports = {
     TOKENS_FILE,
     EXEMPTIONS_FILE,
     DATABASE_URL,
-    ADMIN_PASSWORD: 'seho',
-    SECRET_KEY: 'seho_admin_panel_secret_key_2024',
+    ADMIN_PASSWORD,
+    SECRET_KEY,
     IG_APP_ID: '567067343352427'
 };
