@@ -3,7 +3,7 @@ const config = require('./config');
 
 let pool = null;
 
-function createPool() {
+async function createPool() {
     const connectionString = process.env.DATABASE_URL || config.DATABASE_URL;
     
     if (!connectionString) {
@@ -15,12 +15,25 @@ function createPool() {
         ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
     });
 
+    // Wait for pool to be ready
+    await new Promise((resolve, reject) => {
+        pool.on('error', reject);
+        pool.on('connect', resolve);
+        // Also resolve after timeout to prevent hanging
+        setTimeout(resolve, 5000);
+    });
+
+    return pool;
+}
+
+// Getter to always return current pool instance
+function getPool() {
     return pool;
 }
 
 async function connect() {
     if (!pool) {
-        createPool();
+        await createPool();
     }
     return pool.connect();
 }
@@ -199,6 +212,6 @@ module.exports = {
     saveExemptions,
     loadTokenData,
     saveTokenData,
-    pool,
+    getPool,
     createPool
 };

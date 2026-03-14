@@ -14,15 +14,13 @@ let usePostgres = false;
 if (process.env.DATABASE_URL) {
     storage = require('./storage-postgres');
     usePostgres = true;
-    // Create pool immediately before any async operations
-    storage.createPool();
 } else {
     storage = require('./storage');
 }
 
 // Async initialization function
 async function initializeApp() {
-    // Initialize storage (creates tables, etc.)
+    // Initialize storage (and create pool for PostgreSQL)
     await storage.initStorage();
     console.log('Veritabani baslatildi');
 
@@ -41,7 +39,7 @@ async function initializeApp() {
         
         app.use(session({
             store: new pgSession({
-                pool: storage.pool,
+                pool: storage.getPool(),
                 tableName: 'session',
                 pruneSessionInterval: 60 * 60 // Prune expired sessions every hour
             }),
