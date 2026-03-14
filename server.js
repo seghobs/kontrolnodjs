@@ -9,7 +9,7 @@ const routes = require('./routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const HOST = process.env.HOST || '127.0.0.1';
+const HOST = process.env.HOST || '0.0.0.0';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -38,6 +38,6 @@ storage.initStorage().then(() => {
 
 routes(app);
 
-app.listen(PORT, HOST, () => {
-    console.log(`Sunucu adresi: http://${HOST}:${PORT}`);
+app.listen(PORT, () => {
+    console.log(`Sunucu adresi: http://localhost:${PORT}`);
 });
